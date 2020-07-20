@@ -20,8 +20,10 @@ app.use(bodyParser.json());
 */
 app.get('/lists', (req, res) => {
     // We want to return an array of all the lists in the database
-    List.find({}).then(() => {
+    List.find().then((lists) => {
         res.send(lists);
+    }).catch((e) => {
+        res.send(e);
     });
 })
 
@@ -48,12 +50,84 @@ app.post('/lists', (req, res) => {
 */
 app.patch('/lists/:id', (req,res) => {
     //We want to update the specified list with new values in specified json body of req
-    // 
-})
+    //
+    List.findByIdAndUpdate({ _id: req.params.id }, {
+        $set: req.body
+    }).then(() => {
+        res.sendStatus(200);
+    });
+});
 
 app.delete('/lists/:id', (req,res) => {
     //Delete specified List
+    List.findOneAndRemove({ 
+        _id: req.params.id
+    }).then((removedListDoc) => {
+        res.send(removedListDoc);
+    })
 })
+/** 
+ * GET /lists/:listId/tasks
+ * Purpose : get all tasks that belong to specific list
+*/
+app.get('/lists/:listId/tasks', (req,res) => {
+   // we want to return all task that belong to specifig list
+   Task.find({
+       _listId: req.params.listId
+   }).then((tasks) => {
+       res.send(tasks);
+   })
+});
+
+/** 
+ * POST /lists/:listId/tasks
+ * Purpose : Create a task that belong to specific list
+*/
+app.post('/lists/:listId/tasks', (req,res) => {
+    // We want to create a new task in a list specified by ListId
+    let newTask = new Task({
+        title: req.body.title,
+        _listId: req.params.listId
+    });
+    newTask.save().then((newTaskDoc) => {
+        res.send(newTaskDoc);
+    })
+})
+/* GET ONE TASK USING listId and taskId
+app.get('/lists/:listId/tasks/:taskId', (req,res) => {
+    Task.findOne({
+        _id: req.params.taskId,
+        _listId: req.params.listId
+    }).then((task) => {
+        res.send(task);
+    })
+}) 
+*/
+/** 
+ * POST /lists/:listId/tasks/:taskId
+ * Purpose : Update a task that belong to specific list
+*/
+app.patch('/lists/:listId/tasks/:taskId', (req,res) => {
+    //We want to update specisfk task specified by tasId
+    Task.findOneAndUpdate({
+        _id: req.params.taskId,
+        _listId: req.params.listId
+    }, {
+        $set: req.body
+    }).then(() => {
+        res.sendStatus(200);
+    })
+});
+
+app.delete('/lists/:listId/tasks/:taskId', (req,res) => {
+    //Delete specific task on specific list
+    Task.findOneAndRemove({
+        _id: req.params.taskId,
+        _listId: req.params.listId
+    }).then((removedTaskDoc) => {
+        res.send(removedTaskDoc);
+    })
+});
 
 app.listen(3000, () => {
     console.log("Server is listening on port 3000");
